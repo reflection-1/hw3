@@ -13,7 +13,7 @@
 
 #define SERVER_IDLE 1
 #define SERVER_BUSY 2
-int departure_count = 0; 
+
 // Definition of a Queue Node including arrival and service time
 struct QueueNode {
     double arrival_time;  // customer arrival time, measured from time t=0, inter-arrival times exponential
@@ -62,16 +62,13 @@ struct QueueNode* dequeue(struct Queue* queue) {
 
     return removedNode;
 }
-int i = 0;
+
 void arriveBackOfLine(struct Queue* queue) {
   if (queue->last != NULL) {
     queue->last = queue->last->next;
     queue->waiting_count++;
-    printf("Arrive Back of Line called correct %d \n", i++);
   } else {
-    printf("Cannot move to next arrival: end of queue reached\n %d", i);
-    printf("Total Departuers %d", departure_count);
-    
+    printf("Cannot move to next arrival: end of queue reached\n);
   }
 }
 
@@ -172,7 +169,8 @@ Event* create_event(double event_time, int event_type) {
 // Feel free to add or remove. 
 // You could make these local variables for cleaner code, but you need to change function definitions 
 static double computed_stats[4];  // Store computed statistics: [E(n), E(r), E(w), p0]
-static double simulated_stats[4]; // Store simulated statistics [n, r, w, sim_p0]        // current number of departures from queue
+static double simulated_stats[4]; // Store simulated statistics [n, r, w, sim_p0]        
+int departure_count = 0; 	  // current number of departures from queue
 double current_time = 0;          // current time during simulation
 double last_event_time = 0;       // time of the last event during simulation
 int server_status = SERVER_IDLE;
