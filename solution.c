@@ -68,7 +68,7 @@ void arriveBackOfLine(struct Queue* queue) {
     queue->last = queue->last->next;
     queue->waiting_count++;
   } else {
-    printf("Cannot move to next arrival: end of queue reached\n);
+    printf("Cannot move to next arrival: end of queue reached\n");
   }
 }
 
