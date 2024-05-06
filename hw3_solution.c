@@ -206,7 +206,7 @@ void GenerateComputedStatistics(double lambda, double mu){
     computed_stats[3] = 1.0 - rho; // p0
 
     computed_stats[0] = rho / (1.0 - rho); // E(n)
-    computed_stats[1] = 1.0 / mu; // E(r)
+    computed_stats[1] = 1.0 / (mu - lambda); // E(r)
     computed_stats[2] = rho / (mu * (1.0 - rho)); // E(w)
 }
 
