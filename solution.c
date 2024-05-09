@@ -112,24 +112,49 @@ void initialize_event_list(EventList* event_list) {
   event_list->num_events = 0;
 }
 
-// Function to add an event to the event list
 void schedule_event(EventList* event_list, Event* event) {
-  if (event_list->head == NULL) {
-    event->next = NULL;
-    event_list->head = event;
-  } else if (event_list->head->event_time > event->event_time) {
-    event->next = event_list->head;
-    event_list->head = event;
-  } else {
-    Event* current = event_list->head;
+    // If the event list is empty, insert the event at the beginning
+    if (event_list->head == NULL) {
+        event->next = NULL;
+        event_list->head = event;
+    } 
+    // If the event time of the new event is earlier than the first event in the list, insert it at the beginning
+    else if (event_list->head->event_time > event->event_time) {
+        event->next = event_list->head;
+        event_list->head = event;
+    } 
+    // Otherwise, find the appropriate position to insert the event based on event time
+    else {
+        Event* current = event_list->head;
+        Event* previous = NULL;
 
-    while ( current->next != NULL && current->event_time < event->event_time) {
-        current = current->next;
+        // Traverse the list until finding the correct position
+        while (current != NULL && current->event_time < event->event_time) {
+            previous = current;
+            current = current->next;
+        }
+
+        // Check for equal event times and handle special case for DEPARTURE_EVENT
+        if (current != NULL && current->event_time == event->event_time && event->event_type == DEPARTURE_EVENT) {
+            event->next = current;
+            if (previous != NULL) {
+                previous->next = event;
+            } else {
+                event_list->head = event;
+            }
+        } 
+        // Insert the event at the appropriate position
+        else {
+            event->next = current;
+            if (previous != NULL) {
+                previous->next = event;
+            } else {
+                event_list->head = event;
+            }
+        }
     }
-    event->next = current->next;
-    current->next = event; 
-  }
-  event_list->num_events++;
+    // Increment the count of events in the list
+    event_list->num_events++;
 }
 
 // Function to remove and return the next event from the event list
@@ -281,7 +306,9 @@ struct QueueNode* ProcessArrival(struct Queue* elementQ, struct QueueNode* arriv
 
   // Create next arrival
   printf("Creating new arrival \n");
-  schedule_event(event_list, create_event(arrival->next->arrival_time, ARRIVAL_EVENT));
+  if (elementQ->last->next != NULL) {
+    schedule_event(event_list, create_event(elementQ->last->next->arrival_time, ARRIVAL_EVENT));
+  }
 
   // TODO: Update Queue & Statistics
   // Example: updateSimulatedMeanNrOfCustomers(1); Use the functions at line 182 - 194 to update statistics
@@ -300,7 +327,7 @@ struct QueueNode* ProcessArrival(struct Queue* elementQ, struct QueueNode* arriv
 void StartService(struct Queue* elementQ, EventList* event_list){
   server_status = SERVER_BUSY;
 
-  if (isEmpty(elementQ)) {
+  if (elementQ->first == NULL) {
     printf("Queue is empty. Exiting StartService.\n");
             return;
   }
@@ -323,13 +350,12 @@ void ProcessDeparture(struct Queue* elementQ, struct QueueNode* arrival, EventLi
   // TODO: Update Statistics
   // Example: updateSimulatedMeanNrOfCustomers(1); Use the functions at line 182 - 194 to update statistics
 
-  if (elementQ->first != NULL) {
+  if (elementQ->waiting_count > 0) {
     printf("Departure, starting new service\n");
     schedule_event(event_list, create_event(current_time, START_SERVICE_EVENT));
   }
   
   server_status = SERVER_IDLE;
-  
   departure_count++;
 }
 
@@ -344,9 +370,9 @@ void ProcessDeparture(struct Queue* elementQ, struct QueueNode* arrival, EventLi
 void Simulation(struct Queue* elementQ, double lambda, double mu, int print_period, int total_departures){
   EventList event_list;
   initialize_event_list(&event_list);
-  schedule_event(&event_list, create_event(0, ARRIVAL_EVENT));
+  schedule_event(&event_list, create_event(elementQ->head->arrival_time, ARRIVAL_EVENT));
 
-  while (departure_count < total_departures) {
+  while (departure_count < total_departures ) {
     Event* next_event = get_next_event(&event_list);
     if (next_event == NULL) {
       printf("No more events to process. Exiting simulation.\n");
