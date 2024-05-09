@@ -248,7 +248,7 @@ struct Queue* InitializeQueue(int seed, double lambda, double mu, int total_depa
   // and insert D elements in the queue with the correct arrival times
   double inter_arrival_time;
   double arrival_time = 0;
-  for (int i = 0; i < total_departures; i++) {
+  for (int i = 0; i <= total_departures; i++) {
       inter_arrival_time = -log((double)rand() / RAND_MAX) / lambda;
       arrival_time += inter_arrival_time;
 
@@ -268,6 +268,7 @@ struct Queue* InitializeQueue(int seed, double lambda, double mu, int total_depa
   queue->first = queue->head;
   queue->last = queue->head;
   printf("Initialized Queue \n");
+  
   return queue;
 }
 
@@ -317,6 +318,8 @@ struct QueueNode* ProcessArrival(struct Queue* elementQ, struct QueueNode* arriv
   if (server_status == SERVER_IDLE) {
     printf("Server is idle. Starting service.\n");
     schedule_event(event_list, create_event(current_time, START_SERVICE_EVENT));
+  } else {
+    printf("Server is busy. Waiting for service.\n");
   }
 
   return arrival->next;
@@ -372,7 +375,7 @@ void Simulation(struct Queue* elementQ, double lambda, double mu, int print_peri
   initialize_event_list(&event_list);
   schedule_event(&event_list, create_event(elementQ->head->arrival_time, ARRIVAL_EVENT));
 
-  while (departure_count < total_departures ) {
+  while (departure_count < total_departures) {
     Event* next_event = get_next_event(&event_list);
     if (next_event == NULL) {
       printf("No more events to process. Exiting simulation.\n");
