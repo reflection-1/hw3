@@ -31,7 +31,7 @@ struct Queue {
     struct QueueNode* first;  // Point to the first arrived customer that is waiting for service
     struct QueueNode* last;   // Point to the last arrrived customer that is waiting for service
     int waiting_count;     // Current number of customers waiting for service
-
+    double last_idle_time; 
     double cumulative_response;  // Accumulated response time for all effective departures
     double cumulative_waiting;  // Accumulated waiting time for all effective departures
     double cumulative_idle_times;  // Accumulated times when the system is idle, i.e., no customers in the system
@@ -276,6 +276,7 @@ void PrintStatistics(struct Queue* elementQ, int total_departures, int print_per
     
     simulated_stats[0] = elementQ->cumulative_area/current_time;
     simulated_stats[1] = elementQ->cumulative_response/departure_count;
+    simulated_stats[3] = elementQ->cumulative_idle_times/departure_count;
     
   printf("\n");
   if(departure_count == total_departures) printf("End of Simulation - after %d departures\n", departure_count);
@@ -301,9 +302,6 @@ struct QueueNode* ProcessArrival(struct Queue* elementQ, struct QueueNode* arriv
   if (elementQ->last->next != NULL) {
     schedule_event(event_list, create_event(elementQ->last->next->arrival_time, ARRIVAL_EVENT));
   }
-
-  // TODO: Update Queue & Statistics
-  // Example: updateSimulatedMeanNrOfCustomers(1); Use the functions at line 182 - 194 to update statistics
 
   // Start service if server is idle
   if (server_status == SERVER_IDLE) {
@@ -345,18 +343,18 @@ void StartService(struct Queue* elementQ, EventList* event_list){
 // Should update simulated queue statistics
 // Should update current queue nodes and various queue member variables
 void ProcessDeparture(struct Queue* elementQ, struct QueueNode* arrival, EventList* event_list){
-  // TODO: Update Statistics
-  // Example: updateSimulatedMeanNrOfCustomers(1); Use the functions at line 182 - 194 to update statistics
-
   if (elementQ->waiting_count > 0) {
     printf("Departure, starting new service\n");
     schedule_event(event_list, create_event(current_time, START_SERVICE_EVENT));
   }
-  else{
-      elementQ->cumulative_idle_times += current_time;
+  else {
+      double idle_duration = current_time - elementQ->last_idle_time ; // Calculate idle duration
+      elementQ->cumulative_idle_times += idle_duration;
+      elementQ->last_idle_time = current_time;
   }
   
   server_status = SERVER_IDLE;
+    
   departure_count++;
     n--;
 }
@@ -401,7 +399,8 @@ void Simulation(struct Queue* elementQ, double lambda, double mu, int print_peri
         printf("Invalid event type. Exiting simulation.\n");
         break;
     }
-
+    if ((departure_count % print_period) == 0 && departure_count>0)
+           PrintStatistics(elementQ, total_departures, print_period, lambda);
     printf("---------------------\n");
     last_event_time = current_time;
    
