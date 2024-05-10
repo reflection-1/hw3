@@ -206,7 +206,7 @@ void updateSimulatedMeanNrOfCustomers(double customers) {
 void updateSimulatedResponseTime(double time) {
   simulated_stats[1] += time;
 }
-void updateSimulatedMeanWaitingTime(double time) {
+void addSimulatedMeanWaitingTime(double time) {
   simulated_stats[2] += time;
 }
 
@@ -292,7 +292,7 @@ void PrintStatistics(struct Queue* elementQ, int total_departures, int print_per
 
   printf("Mean n = %.4f (Simulated) and %.4f (Computed)\n", simulated_stats[0], computed_stats[0]);
   printf("Mean r = %.4f (Simulated) and %.4f (Computed)\n", simulated_stats[1], computed_stats[1]);
-  printf("Mean w = %.4f (Simulated) and %.4f (Computed)\n", simulated_stats[2], computed_stats[2]);
+  printf("Mean w = %.4f (Simulated) and %.4f (Computed)\n", simulated_stats[2]/total_departures, computed_stats[2]);
   printf("p0 = %.4f (Simulated) and %.4f (Computed)\n", simulated_stats[3], computed_stats[3]);
 }
 
@@ -339,7 +339,9 @@ void StartService(struct Queue* elementQ, EventList* event_list){
 
   // Remove customer from head of queue
   struct QueueNode* customer = serveFirstInLine(elementQ);
-
+  double wait_time = current_time - customer->arrival_time;
+  addSimulatedMeanWaitingTime(wait_time);
+  printf("Wait time: %f\n", wait_time);
   // Schedule departure event
   Event* departure_event = create_event(current_time + customer->service_time, DEPARTURE_EVENT);
   printf("Scheduling departure event\n");
